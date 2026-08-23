@@ -252,6 +252,10 @@ impl App {
                 {
                     return;
                 }
+                if let ServerNotification::SessionMessageReceived(received_message) = &notification
+                {
+                    self.record_received_message(received_message);
+                }
                 let result = if self.primary_thread_id == Some(thread_id)
                     || self.primary_thread_id.is_none()
                 {

@@ -173,6 +173,8 @@ pub enum Feature {
     RespectSystemProxy,
     /// Enable collab tools.
     Collab,
+    /// Enable messaging between live root sessions in the same app-server process.
+    CrossSessionMessaging,
     /// Enable task-path-based multi-agent routing.
     MultiAgentV2,
     /// Removed compatibility flag retained as a no-op.
@@ -1124,6 +1126,12 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "multi_agent",
         stage: Stage::Stable,
         default_enabled: true,
+    },
+    FeatureSpec {
+        id: Feature::CrossSessionMessaging,
+        key: "cross_session_messaging",
+        stage: Stage::UnderDevelopment,
+        default_enabled: false,
     },
     FeatureSpec {
         id: Feature::MultiAgentV2,

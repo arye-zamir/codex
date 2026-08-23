@@ -2036,6 +2036,7 @@ dependencies = [
  "codex-rmcp-client",
  "codex-rollout",
  "codex-sandboxing",
+ "codex-session-messaging-extension",
  "codex-shell-command",
  "codex-skills",
  "codex-skills-extension",
@@ -4153,6 +4154,22 @@ dependencies = [
  "sha2 0.10.9",
  "tempfile",
  "tracing",
+]
+
+[[package]]
+name = "codex-session-messaging-extension"
+version = "0.0.0"
+dependencies = [
+ "codex-core",
+ "codex-extension-api",
+ "codex-features",
+ "codex-protocol",
+ "codex-tools",
+ "codex-utils-absolute-path",
+ "codex-utils-string",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

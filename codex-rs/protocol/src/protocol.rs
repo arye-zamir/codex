@@ -757,7 +757,17 @@ pub struct InterAgentCommunication {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub internal_chat_message_metadata_passthrough: Option<InternalChatMessageMetadataPassthrough>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub session_message_provenance: Option<SessionMessageProvenance>,
     pub trigger_turn: bool,
+}
+
+/// Sender and recipient sessions of a cross-session message.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, JsonSchema, TS)]
+pub struct SessionMessageProvenance {
+    pub sender_thread_id: ThreadId,
+    pub recipient_thread_id: ThreadId,
 }
 
 impl InterAgentCommunication {
@@ -776,6 +786,7 @@ impl InterAgentCommunication {
             content,
             encrypted_content: None,
             internal_chat_message_metadata_passthrough: None,
+            session_message_provenance: None,
             trigger_turn,
         }
     }
@@ -795,7 +806,29 @@ impl InterAgentCommunication {
             content: String::new(),
             encrypted_content: Some(encrypted_content),
             internal_chat_message_metadata_passthrough: None,
+            session_message_provenance: None,
             trigger_turn,
+        }
+    }
+
+    pub fn new_session_message(
+        sender_thread_id: ThreadId,
+        recipient_thread_id: ThreadId,
+        content: String,
+    ) -> Self {
+        Self {
+            id: None,
+            author: AgentPath::root(),
+            recipient: AgentPath::root(),
+            other_recipients: Vec::new(),
+            content,
+            encrypted_content: None,
+            internal_chat_message_metadata_passthrough: None,
+            session_message_provenance: Some(SessionMessageProvenance {
+                sender_thread_id,
+                recipient_thread_id,
+            }),
+            trigger_turn: true,
         }
     }
 
@@ -820,28 +853,33 @@ impl InterAgentCommunication {
     }
 
     pub fn to_model_input_item(&self) -> ResponseItem {
-        let content = match &self.encrypted_content {
-            Some(encrypted_content) => {
-                let message_type = if self.trigger_turn {
-                    "NEW_TASK"
-                } else {
-                    "MESSAGE"
-                };
-                vec![
-                    AgentMessageInputContent::InputText {
-                        text: format!(
-                            "Message Type: {message_type}\nTask name: {}\nSender: {}\nPayload:\n",
-                            self.recipient, self.author
-                        ),
-                    },
-                    AgentMessageInputContent::EncryptedContent {
-                        encrypted_content: encrypted_content.clone(),
-                    },
-                ]
-            }
-            None => vec![AgentMessageInputContent::InputText {
-                text: self.content.clone(),
+        let content = match self.session_message_provenance {
+            Some(provenance) => vec![AgentMessageInputContent::InputText {
+                text: session_message_envelope(provenance, &self.content),
             }],
+            None => match &self.encrypted_content {
+                Some(encrypted_content) => {
+                    let message_type = if self.trigger_turn {
+                        "NEW_TASK"
+                    } else {
+                        "MESSAGE"
+                    };
+                    vec![
+                        AgentMessageInputContent::InputText {
+                            text: format!(
+                                "Message Type: {message_type}\nTask name: {}\nSender: {}\nPayload:\n",
+                                self.recipient, self.author
+                            ),
+                        },
+                        AgentMessageInputContent::EncryptedContent {
+                            encrypted_content: encrypted_content.clone(),
+                        },
+                    ]
+                }
+                None => vec![AgentMessageInputContent::InputText {
+                    text: self.content.clone(),
+                }],
+            },
         };
         ResponseItem::AgentMessage {
             id: self.id.clone(),
@@ -866,6 +904,13 @@ impl InterAgentCommunication {
             _ => None,
         }
     }
+}
+
+fn session_message_envelope(provenance: SessionMessageProvenance, content: &str) -> String {
+    format!(
+        "Message Type: MESSAGE\nSender Session: {}\nRecipient Session: {}\nPayload:\n{content}",
+        provenance.sender_thread_id, provenance.recipient_thread_id
+    )
 }
 
 impl Op {
@@ -1467,6 +1512,9 @@ pub enum EventMsg {
     /// Exited review mode with an optional final result to apply.
     ExitedReviewMode(ExitedReviewModeEvent),
 
+    /// A peer session delivered a cross-session message to this thread.
+    SessionMessageReceived(SessionMessageReceivedEvent),
+
     RawResponseItem(RawResponseItemEvent),
     RawResponseCompleted(RawResponseCompletedEvent),
 
@@ -1838,6 +1886,13 @@ impl CodexErrorInfo {
 #[derive(Debug, Clone, Deserialize, Serialize, TS, JsonSchema)]
 pub struct RawResponseItemEvent {
     pub item: ResponseItem,
+}
+
+/// Cross-session message delivered to this thread by a peer session.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, TS, JsonSchema)]
+pub struct SessionMessageReceivedEvent {
+    pub sender_thread_id: ThreadId,
+    pub message: String,
 }
 
 /// Exact usage reported by one upstream Responses API completion.
@@ -4396,6 +4451,7 @@ mod tests {
             content: "review the diff".to_string(),
             encrypted_content: None,
             internal_chat_message_metadata_passthrough: None,
+            session_message_provenance: None,
             trigger_turn: true,
         };
         communication.set_turn_id_if_missing("turn-1");
@@ -4413,6 +4469,64 @@ mod tests {
                 }],
                 phase: Some(MessagePhase::Commentary),
             }
+        );
+    }
+
+    #[test]
+    fn session_message_communication_preserves_body_and_renders_model_envelope() {
+        let sender_thread_id = ThreadId::from_u128(1);
+        let recipient_thread_id = ThreadId::from_u128(2);
+        let communication = InterAgentCommunication::new_session_message(
+            sender_thread_id,
+            recipient_thread_id,
+            "Can you review the API contract?".to_string(),
+        );
+
+        assert_eq!(communication.content, "Can you review the API contract?");
+        assert_eq!(
+            communication.session_message_provenance,
+            Some(SessionMessageProvenance {
+                sender_thread_id,
+                recipient_thread_id,
+            })
+        );
+        assert_eq!(
+            communication.to_model_input_item(),
+            ResponseItem::AgentMessage {
+                id: None,
+                author: "/root".to_string(),
+                recipient: "/root".to_string(),
+                content: vec![AgentMessageInputContent::InputText {
+                    text: concat!(
+                        "Message Type: MESSAGE\n",
+                        "Sender Session: 00000000-0000-0000-0000-000000000001\n",
+                        "Recipient Session: 00000000-0000-0000-0000-000000000002\n",
+                        "Payload:\n",
+                        "Can you review the API contract?",
+                    )
+                    .to_string(),
+                }],
+                internal_chat_message_metadata_passthrough: None,
+            }
+        );
+    }
+
+    #[test]
+    fn generic_inter_agent_communication_omits_session_message_provenance() {
+        let communication = InterAgentCommunication::new(
+            AgentPath::root(),
+            AgentPath::root(),
+            Vec::new(),
+            "Review the API contract.".to_string(),
+            /*trigger_turn*/ false,
+        );
+        let serialized = serde_json::to_value(&communication).expect("serialize communication");
+
+        assert!(serialized.get("session_message_provenance").is_none());
+        assert_eq!(
+            serde_json::from_value::<InterAgentCommunication>(serialized)
+                .expect("deserialize communication"),
+            communication
         );
     }
 

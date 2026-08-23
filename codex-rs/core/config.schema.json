@@ -649,6 +649,9 @@
             "connectors": {
               "type": "boolean"
             },
+            "cross_session_messaging": {
+              "type": "boolean"
+            },
             "current_time_reminder": {
               "$ref": "#/definitions/FeatureToml_for_CurrentTimeReminderConfigToml"
             },
@@ -3726,6 +3729,7 @@
               "open_external_editor": null,
               "open_transcript": null,
               "queue": null,
+              "received_messages": null,
               "submit": null,
               "toggle_fast_mode": null,
               "toggle_raw_output": null,
@@ -4357,6 +4361,14 @@
           ],
           "description": "Queue the current composer draft while a task is running."
         },
+        "received_messages": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/KeybindingsSpec"
+            }
+          ],
+          "description": "Open the received messages overlay."
+        },
         "submit": {
           "allOf": [
             {
@@ -4512,6 +4524,7 @@
             "open_external_editor": null,
             "open_transcript": null,
             "queue": null,
+            "received_messages": null,
             "submit": null,
             "toggle_fast_mode": null,
             "toggle_raw_output": null,
@@ -5617,6 +5630,9 @@
           "type": "boolean"
         },
         "connectors": {
+          "type": "boolean"
+        },
+        "cross_session_messaging": {
           "type": "boolean"
         },
         "current_time_reminder": {

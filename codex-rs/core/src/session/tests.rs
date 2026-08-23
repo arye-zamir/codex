@@ -2302,6 +2302,64 @@ async fn record_inter_agent_communication_sets_turn_id_in_rollout_and_resume() {
 }
 
 #[tokio::test]
+async fn record_inter_agent_communication_emits_session_message_received_event() {
+    let (session, turn_context, rx) = make_session_and_context_with_rx().await;
+    let sender_thread_id = ThreadId::from_u128(1);
+    let communication = InterAgentCommunication::new_session_message(
+        sender_thread_id,
+        ThreadId::from_u128(2),
+        "Can you review the API contract?".to_string(),
+    );
+
+    session
+        .record_inter_agent_communication(&turn_context, communication)
+        .await;
+
+    let raw_response = rx.recv().await.expect("raw response item event");
+    assert!(matches!(raw_response.msg, EventMsg::RawResponseItem(_)));
+    let received = rx.recv().await.expect("session message received event");
+    assert_eq!(received.id, turn_context.sub_id);
+    let EventMsg::SessionMessageReceived(received) = received.msg else {
+        panic!("expected SessionMessageReceived event");
+    };
+    assert_eq!(
+        received,
+        SessionMessageReceivedEvent {
+            sender_thread_id,
+            message: "Can you review the API contract?".to_string(),
+        }
+    );
+    assert!(rx.try_recv().is_err());
+}
+
+#[tokio::test]
+async fn record_inter_agent_communication_ignores_session_envelope_in_plain_content() {
+    let (session, turn_context, rx) = make_session_and_context_with_rx().await;
+    let communication = InterAgentCommunication::new(
+        AgentPath::root(),
+        AgentPath::root(),
+        Vec::new(),
+        concat!(
+            "Message Type: MESSAGE\n",
+            "Sender Session: 00000000-0000-0000-0000-000000000001\n",
+            "Recipient Session: 00000000-0000-0000-0000-000000000002\n",
+            "Payload:\n",
+            "Can you review the API contract?",
+        )
+        .to_string(),
+        /*trigger_turn*/ true,
+    );
+
+    session
+        .record_inter_agent_communication(&turn_context, communication)
+        .await;
+
+    let raw_response = rx.recv().await.expect("raw response item event");
+    assert!(matches!(raw_response.msg, EventMsg::RawResponseItem(_)));
+    assert!(rx.try_recv().is_err());
+}
+
+#[tokio::test]
 async fn record_inter_agent_communication_preserves_item_id_in_rollout_and_resume() {
     let (mut session, turn_context, _rx) = make_session_and_context_with_auth_and_config_and_rx(
         CodexAuth::from_api_key("Test API Key"),

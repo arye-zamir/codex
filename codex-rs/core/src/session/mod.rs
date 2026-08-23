@@ -124,6 +124,7 @@ use codex_protocol::protocol::ItemStartedEvent;
 use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
 use codex_protocol::protocol::MultiAgentVersion;
 use codex_protocol::protocol::RawResponseItemEvent;
+use codex_protocol::protocol::SessionMessageReceivedEvent;
 use codex_protocol::protocol::SessionSource;
 use codex_protocol::protocol::SubAgentSource;
 use codex_protocol::protocol::ThreadHistoryMode;
@@ -3297,6 +3298,12 @@ impl Session {
         turn_context: &TurnContext,
         communication: InterAgentCommunication,
     ) {
+        let session_message_received = communication.session_message_provenance.map(|provenance| {
+            SessionMessageReceivedEvent {
+                sender_thread_id: provenance.sender_thread_id,
+                message: communication.content.clone(),
+            }
+        });
         let response_item = communication.to_model_input_item();
         let (items, _) = self.prepare_conversation_items_for_history(
             turn_context,
@@ -3320,6 +3327,10 @@ impl Session {
         ])
         .await;
         self.send_raw_response_items(turn_context, items).await;
+        if let Some(event) = session_message_received {
+            self.send_event(turn_context, EventMsg::SessionMessageReceived(event))
+                .await;
+        }
     }
 
     async fn maybe_warn_on_server_model_mismatch(
