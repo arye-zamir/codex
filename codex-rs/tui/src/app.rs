@@ -227,6 +227,7 @@ mod permission_shortcuts;
 mod pets;
 mod platform_actions;
 mod plugin_mentions;
+mod received_messages;
 mod replay_filter;
 mod resize_reflow;
 mod safety_buffering;
@@ -546,6 +547,7 @@ pub(crate) struct App {
     last_rendered_history_tail: Option<history_ui::RenderedHistoryTail>,
     last_thread_usage_status_cell: Option<history_ui::ThreadUsageStatusHistory>,
     pub(crate) pending_thread_usage_history_refresh: bool,
+    received_messages: received_messages::ReceivedMessageHistory,
 
     // Pager overlay state (Transcript or Static like Diff)
     pub(crate) overlay: Option<Overlay>,

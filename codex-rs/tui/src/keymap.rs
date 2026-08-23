@@ -79,6 +79,8 @@ pub(crate) struct AppKeymap {
     pub(crate) open_agents: Vec<KeyBinding>,
     /// Open transcript overlay.
     pub(crate) open_transcript: Vec<KeyBinding>,
+    /// Open the received messages overlay.
+    pub(crate) received_messages: Vec<KeyBinding>,
     /// Open external editor for the current draft.
     pub(crate) open_external_editor: Vec<KeyBinding>,
     /// Copy the last agent response to the clipboard.
@@ -579,6 +581,15 @@ impl RuntimeKeymap {
                     binding.action.context.overlaps(KeymapContext::Global)
                         && binding.chord.prefix.parts() == key_hint::alt(KeyCode::Char('a')).parts()
                 }));
+        let received_messages_default_is_shadowed = keymap.global.received_messages.is_none()
+            && (configured_main_surface_alias_is_used(keymap, "ctrl-q")
+                || configured_context_alias_is_used(&keymap.list, "ctrl-q")
+                || configured_context_alias_is_used(&keymap.approval, "ctrl-q")
+                || chords.bindings.iter().any(|binding| {
+                    binding.action.context.overlaps(KeymapContext::Global)
+                        && binding.chord.prefix.parts()
+                            == key_hint::ctrl(KeyCode::Char('q')).parts()
+                }));
 
         let app = AppKeymap {
             open_agents: if open_agents_default_is_shadowed {
@@ -595,6 +606,15 @@ impl RuntimeKeymap {
                 &defaults.app.open_transcript,
                 "tui.keymap.global.open_transcript",
             )?,
+            received_messages: if received_messages_default_is_shadowed {
+                Vec::new()
+            } else {
+                resolve_bindings(
+                    keymap.global.received_messages.as_ref(),
+                    &defaults.app.received_messages,
+                    "tui.keymap.global.received_messages",
+                )?
+            },
             open_external_editor: resolve_bindings(
                 keymap.global.open_external_editor.as_ref(),
                 &defaults.app.open_external_editor,
@@ -1041,6 +1061,10 @@ impl RuntimeKeymap {
                 app.open_transcript.as_slice(),
             ),
             (
+                keymap.global.received_messages.as_ref(),
+                app.received_messages.as_slice(),
+            ),
+            (
                 keymap.global.open_external_editor.as_ref(),
                 app.open_external_editor.as_slice(),
             ),
@@ -1203,6 +1227,7 @@ impl RuntimeKeymap {
             app: AppKeymap {
                 open_agents: default_bindings![alt(KeyCode::Char('a'))],
                 open_transcript: default_bindings![ctrl(KeyCode::Char('t'))],
+                received_messages: default_bindings![ctrl(KeyCode::Char('q'))],
                 open_external_editor: default_bindings![ctrl(KeyCode::Char('g'))],
                 copy: default_bindings![ctrl(KeyCode::Char('o'))],
                 clear_terminal: default_bindings![ctrl(KeyCode::Char('l'))],
@@ -1521,6 +1546,7 @@ impl RuntimeKeymap {
             [
                 ("open_agents", self.app.open_agents.as_slice()),
                 ("open_transcript", self.app.open_transcript.as_slice()),
+                ("received_messages", self.app.received_messages.as_slice()),
                 (
                     "open_external_editor",
                     self.app.open_external_editor.as_slice(),
@@ -1574,6 +1600,7 @@ impl RuntimeKeymap {
             [
                 ("open_agents", self.app.open_agents.as_slice()),
                 ("open_transcript", self.app.open_transcript.as_slice()),
+                ("received_messages", self.app.received_messages.as_slice()),
                 (
                     "open_external_editor",
                     self.app.open_external_editor.as_slice(),
@@ -1633,6 +1660,7 @@ impl RuntimeKeymap {
             [
                 ("open_agents", self.app.open_agents.as_slice()),
                 ("open_transcript", self.app.open_transcript.as_slice()),
+                ("received_messages", self.app.received_messages.as_slice()),
                 (
                     "open_external_editor",
                     self.app.open_external_editor.as_slice(),
@@ -1699,6 +1727,7 @@ impl RuntimeKeymap {
             [
                 ("open_agents", self.app.open_agents.as_slice()),
                 ("open_transcript", self.app.open_transcript.as_slice()),
+                ("received_messages", self.app.received_messages.as_slice()),
                 (
                     "open_external_editor",
                     self.app.open_external_editor.as_slice(),
@@ -2589,6 +2618,7 @@ mod tests {
             runtime.composer.queue,
             vec![key_hint::ctrl(KeyCode::Char('q'))]
         );
+        assert!(runtime.app.received_messages.is_empty());
     }
 
     #[test]
@@ -2639,6 +2669,24 @@ mod tests {
         keymap.chat.previous_permission_mode = Some(one("f7"));
         keymap.chat.next_permission_mode = Some(one("ctrl-x enter"));
         assert!(RuntimeKeymap::from_config(&keymap).is_ok());
+    }
+
+    #[test]
+    fn default_received_messages_binding_is_ctrl_q() {
+        let runtime = RuntimeKeymap::defaults();
+
+        assert_eq!(
+            runtime.app.received_messages,
+            vec![key_hint::ctrl(KeyCode::Char('q'))]
+        );
+    }
+
+    #[test]
+    fn configured_received_messages_binding_rejects_conflicts() {
+        let mut keymap = TuiKeymap::default();
+        keymap.global.received_messages = Some(one("ctrl-l"));
+
+        expect_conflict(&keymap, "received_messages", "clear_terminal");
     }
 
     #[test]

@@ -356,6 +356,12 @@ impl App {
             return;
         }
 
+        if app_keymap_shortcuts_available && self.keymap.app.received_messages.is_pressed(key_event)
+        {
+            self.open_received_messages_overlay(tui);
+            return;
+        }
+
         if app_keymap_shortcuts_available
             && self.keymap.app.open_external_editor.is_pressed(key_event)
         {

@@ -113,6 +113,7 @@ pub(crate) struct FooterKeyHints {
     pub(crate) external_editor: Option<ShortcutHint>,
     pub(crate) edit_previous: Option<ShortcutHint>,
     pub(crate) show_transcript: Option<ShortcutHint>,
+    pub(crate) received_messages: Option<ShortcutHint>,
     pub(crate) history_search: Option<ShortcutHint>,
     pub(crate) reasoning_down: Option<ShortcutHint>,
     pub(crate) reasoning_up: Option<ShortcutHint>,
@@ -128,6 +129,7 @@ impl FooterKeyHints {
             external_editor: Some(key_hint::ctrl(KeyCode::Char('g')).into()),
             edit_previous: Some(key_hint::plain(KeyCode::Esc).into()),
             show_transcript: Some(key_hint::ctrl(KeyCode::Char('t')).into()),
+            received_messages: Some(key_hint::ctrl(KeyCode::Char('q')).into()),
             history_search: Some(key_hint::ctrl(KeyCode::Char('r')).into()),
             reasoning_down: Some(key_hint::alt(KeyCode::Char(',')).into()),
             reasoning_up: Some(key_hint::alt(KeyCode::Char('.')).into()),
@@ -896,6 +898,7 @@ fn shortcut_overlay_lines(state: ShortcutsState) -> Vec<Line<'static>> {
     let mut history_search = Line::from("");
     let mut quit = Line::from("");
     let mut show_transcript = Line::from("");
+    let mut received_messages = Line::from("");
     let mut change_mode = Line::from("");
     let mut reasoning_down = Line::from("");
     let mut reasoning_up = Line::from("");
@@ -914,6 +917,7 @@ fn shortcut_overlay_lines(state: ShortcutsState) -> Vec<Line<'static>> {
                 ShortcutId::HistorySearch => history_search = text,
                 ShortcutId::Quit => quit = text,
                 ShortcutId::ShowTranscript => show_transcript = text,
+                ShortcutId::ReceivedMessages => received_messages = text,
                 ShortcutId::ChangeMode => change_mode = text,
                 ShortcutId::ReasoningDown => reasoning_down = text,
                 ShortcutId::ReasoningUp => reasoning_up = text,
@@ -939,6 +943,7 @@ fn shortcut_overlay_lines(state: ShortcutsState) -> Vec<Line<'static>> {
         ordered.push(change_mode);
     }
     ordered.push(show_transcript);
+    ordered.push(received_messages);
 
     let mut lines = build_columns(ordered);
     lines.push(Line::from(""));
@@ -1023,6 +1028,7 @@ enum ShortcutId {
     HistorySearch,
     Quit,
     ShowTranscript,
+    ReceivedMessages,
     ChangeMode,
     ReasoningDown,
     ReasoningUp,
@@ -1080,6 +1086,7 @@ impl ShortcutDescriptor {
             ShortcutId::ExternalEditor => state.key_hints.external_editor,
             ShortcutId::EditPrevious => state.key_hints.edit_previous,
             ShortcutId::ShowTranscript => state.key_hints.show_transcript,
+            ShortcutId::ReceivedMessages => state.key_hints.received_messages,
             ShortcutId::HistorySearch => state.key_hints.history_search,
             ShortcutId::ReasoningDown => state.key_hints.reasoning_down,
             ShortcutId::ReasoningUp => state.key_hints.reasoning_up,
@@ -1238,6 +1245,15 @@ const SHORTCUTS: &[ShortcutDescriptor] = &[
         }],
         prefix: "",
         label: " to view transcript",
+    },
+    ShortcutDescriptor {
+        id: ShortcutId::ReceivedMessages,
+        bindings: &[ShortcutBinding {
+            key: key_hint::ctrl(KeyCode::Char('q')),
+            condition: DisplayCondition::Always,
+        }],
+        prefix: "",
+        label: " to view received messages",
     },
     ShortcutDescriptor {
         id: ShortcutId::ChangeMode,
