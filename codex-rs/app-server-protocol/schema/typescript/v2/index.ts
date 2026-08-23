@@ -404,6 +404,7 @@ export type { SendAddCreditsNudgeEmailResponse } from "./SendAddCreditsNudgeEmai
 export type { ServerDiagnosticsGauge } from "./ServerDiagnosticsGauge";
 export type { ServerDiagnosticsProcess } from "./ServerDiagnosticsProcess";
 export type { ServerRequestResolvedNotification } from "./ServerRequestResolvedNotification";
+export type { SessionMessageReceivedNotification } from "./SessionMessageReceivedNotification";
 export type { SessionMigration } from "./SessionMigration";
 export type { SessionSource } from "./SessionSource";
 export type { SkillDependencies } from "./SkillDependencies";

@@ -96,6 +96,8 @@ pub struct TuiGlobalKeymap {
     pub open_agents: Option<KeybindingsSpec>,
     /// Open the transcript overlay.
     pub open_transcript: Option<KeybindingsSpec>,
+    /// Open the received messages overlay.
+    pub received_messages: Option<KeybindingsSpec>,
     /// Open the external editor for the current draft.
     pub open_external_editor: Option<KeybindingsSpec>,
     /// Copy the last agent response to the clipboard.

@@ -34,6 +34,7 @@ pub(super) struct FooterState {
     pub(super) active_agent_label: Option<String>,
     pub(super) external_editor_key: Option<ShortcutHint>,
     pub(super) show_transcript_key: Option<ShortcutHint>,
+    pub(super) received_messages_key: Option<ShortcutHint>,
     pub(super) insert_newline_key: Option<ShortcutHint>,
     pub(super) queue_key: Option<ShortcutHint>,
     pub(super) toggle_shortcuts_key: Option<ShortcutHint>,

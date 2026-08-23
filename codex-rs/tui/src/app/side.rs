@@ -501,6 +501,7 @@ impl App {
         self.thread_event_channels.remove(&thread_id);
         self.side_threads.remove(&thread_id);
         self.agent_navigation.remove(thread_id);
+        self.received_messages.remove_thread(thread_id);
         if self.active_thread_id == Some(thread_id) {
             self.clear_active_thread().await;
         } else {

@@ -1,0 +1,26 @@
+---
+source: tui/src/app/received_messages_tests.rs
+expression: terminal.backend()
+---
+"/ R E C E I V E D / / / "
+"Newest first · 1 older  "
+"message omitted         "
+"(20-message cap).       "
+"                        "
+"From session:           "
+"00000000-0000-4000-8000-"
+"000000000002            "
+"Latest line one         "
+"Latest line two         "
+"                        "
+"From session:           "
+"00000000-0000-4000-8000-"
+"000000000002            "
+"Older message           "
+"                        "
+"From session:           "
+"00000000-0000-4000-8000-"
+"─────────────────── 0% ─"
+" ↑/↓ to scroll   pgup/pg"
+" q to quit              "
+"                        "

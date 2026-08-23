@@ -378,6 +378,23 @@ fn collab_is_legacy_alias_for_multi_agent() {
 }
 
 #[test]
+fn cross_session_messaging_is_opt_in() {
+    assert_eq!(
+        feature_for_key("cross_session_messaging"),
+        Some(Feature::CrossSessionMessaging)
+    );
+    let mut features = Features::with_defaults();
+    assert!(!features.enabled(Feature::CrossSessionMessaging));
+
+    features.apply_map(&BTreeMap::from([(
+        "cross_session_messaging".to_string(),
+        true,
+    )]));
+
+    assert!(features.enabled(Feature::CrossSessionMessaging));
+}
+
+#[test]
 fn codex_hooks_is_legacy_alias_for_hooks() {
     assert_eq!(feature_for_key("hooks"), Some(Feature::CodexHooks));
     assert_eq!(feature_for_key("codex_hooks"), Some(Feature::CodexHooks));

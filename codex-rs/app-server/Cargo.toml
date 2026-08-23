@@ -77,6 +77,7 @@ codex-model-provider = { workspace = true }
 codex-models-manager = { workspace = true }
 codex-protocol = { workspace = true }
 codex-queue-extension = { workspace = true }
+codex-session-messaging-extension = { workspace = true }
 codex-app-server-protocol = { workspace = true }
 codex-app-server-transport = { workspace = true }
 codex-feedback = { workspace = true }

@@ -4941,6 +4941,26 @@
           "properties": {
             "method": {
               "enum": [
+                "sessionMessage/received"
+              ],
+              "title": "SessionMessage/receivedNotificationMethod",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/definitions/v2/SessionMessageReceivedNotification"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "title": "SessionMessage/receivedNotification",
+          "type": "object"
+        },
+        {
+          "properties": {
+            "method": {
+              "enum": [
                 "item/agentMessage/delta"
               ],
               "title": "Item/agentMessage/deltaNotificationMethod",
@@ -18310,6 +18330,32 @@
           "threadId"
         ],
         "title": "ServerRequestResolvedNotification",
+        "type": "object"
+      },
+      "SessionMessageReceivedNotification": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "senderThreadId": {
+            "description": "Thread that sent the message.",
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "turnId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "senderThreadId",
+          "threadId",
+          "turnId"
+        ],
+        "title": "SessionMessageReceivedNotification",
         "type": "object"
       },
       "SessionMigration": {

@@ -84,6 +84,7 @@ mod selected_environment;
 mod server_diagnostics;
 #[cfg(not(target_os = "windows"))]
 mod session_end;
+mod session_messaging;
 mod skills_list;
 mod sleep;
 mod thread_archive;

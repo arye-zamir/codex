@@ -653,6 +653,8 @@ impl ChatComposer {
                     .primary_hint(KeymapContext::Global, "open_external_editor"),
                 show_transcript_key: default_keymap
                     .primary_hint(KeymapContext::Global, "open_transcript"),
+                received_messages_key: default_keymap
+                    .primary_hint(KeymapContext::Global, "received_messages"),
                 insert_newline_key: footer_insert_newline_key(
                     &default_keymap.editor.insert_newline,
                     use_shift_enter_hint,
@@ -876,6 +878,8 @@ impl ChatComposer {
             keymap.primary_hint(KeymapContext::Global, "open_external_editor");
         self.footer.show_transcript_key =
             keymap.primary_hint(KeymapContext::Global, "open_transcript");
+        self.footer.received_messages_key =
+            keymap.primary_hint(KeymapContext::Global, "received_messages");
         self.footer.insert_newline_key =
             match keymap.primary_hint(KeymapContext::Editor, "insert_newline") {
                 hint @ Some(ShortcutHint::Chord { .. }) => hint,
@@ -3756,6 +3760,7 @@ impl ChatComposer {
                 external_editor: self.footer.external_editor_key,
                 edit_previous: Some(key_hint::plain(KeyCode::Esc).into()),
                 show_transcript: self.footer.show_transcript_key,
+                received_messages: self.footer.received_messages_key,
                 history_search: self.footer.history_search_key,
                 reasoning_down: self.footer.reasoning_down_key,
                 reasoning_up: self.footer.reasoning_up_key,
@@ -4943,6 +4948,9 @@ mod tests {
         config.editor.insert_newline = Some(KeybindingsSpec::One(KeybindingSpec(
             "ctrl-x enter".to_string(),
         )));
+        config.global.received_messages = Some(KeybindingsSpec::One(KeybindingSpec(
+            "alt-z alt-z".to_string(),
+        )));
         let keymap = RuntimeKeymap::from_config(&config).expect("valid composer chords");
         let (mut composer, _rx) = new_test_composer();
         composer.set_keymap_bindings(&keymap);
@@ -4961,6 +4969,13 @@ mod tests {
             Some(ShortcutHint::Chord {
                 prefix: key_hint::ctrl(KeyCode::Char('x')),
                 completion: key_hint::plain(KeyCode::Enter),
+            })
+        );
+        assert_eq!(
+            hints.received_messages,
+            Some(ShortcutHint::Chord {
+                prefix: key_hint::alt(KeyCode::Char('z')),
+                completion: key_hint::alt(KeyCode::Char('z')),
             })
         );
 
